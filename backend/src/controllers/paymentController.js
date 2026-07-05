@@ -36,18 +36,24 @@ export const initiateMpesaPayment = async (req, res) => {
   try {
     const { phoneNumber, amount, propertyId } = req.body;
 
+    console.log('Received payment request:', { phoneNumber, amount, propertyId });
+
     if (!phoneNumber || !amount || !propertyId) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
     // Format phone number (remove 0 or +254)
-    const formattedPhone = phoneNumber.replace(/^0+/, '').replace(/^\+254/, '');
+    const formattedPhone = phoneNumber.replace(/^0+/, '').replace(/^\+254/, '').replace(/\D/g, '');
     const fullPhone = '254' + formattedPhone;
+
+    console.log('Formatted phone:', fullPhone);
 
     // Get access token
     const auth = Buffer.from(
       `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
     ).toString('base64');
+
+    console.log('Getting access token...');
 
     const tokenResponse = await axios.get(
       'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
@@ -59,6 +65,7 @@ export const initiateMpesaPayment = async (req, res) => {
     );
 
     const accessToken = tokenResponse.data.access_token;
+    console.log('Access token obtained');
 
     // Generate password
     const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
@@ -81,6 +88,8 @@ export const initiateMpesaPayment = async (req, res) => {
       TransactionDesc: 'Land Rates Payment',
     };
 
+    console.log('STK Request:', JSON.stringify(stkRequest, null, 2));
+
     const stkResponse = await axios.post(
       'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
       stkRequest,
@@ -92,16 +101,22 @@ export const initiateMpesaPayment = async (req, res) => {
       }
     );
 
+    console.log('STK Response:', stkResponse.data);
+
     res.json({
       success: true,
       message: 'STK Push sent successfully',
       data: stkResponse.data,
     });
   } catch (error) {
-    console.error('M-Pesa error:', error.response?.data || error.message);
+    console.error('M-Pesa STK Error Details:');
+    console.error('Status:', error.response?.status);
+    console.error('Data:', JSON.stringify(error.response?.data, null, 2));
+    console.error('Message:', error.message);
+    
     res.status(500).json({
       message: 'M-Pesa payment initiation failed',
-      error: error.response?.data || error.message,
+      error: error.response?.data || error.message
     });
   }
 };
