@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend
@@ -9,6 +7,9 @@ services:
     environment:
       - PORT=5000
       - JWT_SECRET=your_super_secret_key_here
+      - DATABASE_URL=postgresql://kisumu_user:secure_password_here@postgres:5432/kisumu_rates
+    depends_on:
+      - postgres
     restart: unless-stopped
 
   frontend:
@@ -19,3 +20,19 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: kisumu-postgres
+    environment:
+      - POSTGRES_DB=kisumu_rates
+      - POSTGRES_USER=kisumu_user
+      - POSTGRES_PASSWORD=secure_password_here
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
