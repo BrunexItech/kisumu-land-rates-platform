@@ -1,11 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
-// In-memory data stores
+// In-memory data stores (will be replaced with PostgreSQL models later)
 export let properties = [];
 export let payments = [];
 export let auditLog = [];
 export let tenants = [];
-export let users = [];
 
 const SUBCOUNTIES = {
   'Kisumu East': ['Kajulu', 'Kolwa East', 'Manyatta B', 'Nyalenda A', 'Kolwa Central'],

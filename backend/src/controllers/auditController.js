@@ -1,41 +1,96 @@
-import { auditLog } from '../data/seedData.js';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import User from '../models/User.js';
 
-export const getAuditFlags = (req, res) => {
-  let result = [...auditLog];
-  
-  const { severity, resolved } = req.query;
-  
-  if (severity) result = result.filter(f => f.severity === severity);
-  if (resolved === 'open') result = result.filter(f => !f.resolved);
-  else if (resolved === 'resolved') result = result.filter(f => f.resolved);
-  
-  res.json(result);
-};
+export const register = async (req, res) => {
+  const { fullName, role, nationalId, phone, kraPin, username, password } = req.body;
 
-export const getAuditStats = (req, res) => {
-  const high = auditLog.filter(f => f.severity === 'high' && !f.resolved).length;
-  const medium = auditLog.filter(f => f.severity === 'medium' && !f.resolved).length;
-  const total = auditLog.filter(f => !f.resolved).length;
-  const resolved = auditLog.filter(f => f.resolved).length;
-  
-  res.json({ high, medium, total, resolved });
-};
+  try {
+    const existingUser = await User.findOne({ where: { username } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
 
-export const resolveFlag = (req, res) => {
-  const flag = auditLog.find(f => f.id === req.params.id);
-  if (!flag) {
-    return res.status(404).json({ message: 'Flag not found' });
+    const user = await User.create({
+      fullName,
+      role,
+      nationalId,
+      phone,
+      kraPin,
+      username,
+      password,
+    });
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.status(201).json({
+      token,
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        username: user.username,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ message: 'Registration failed' });
   }
-  flag.resolved = true;
-  res.json({ message: 'Flag resolved successfully', flag });
 };
 
-export const generateBrief = (req, res) => {
-  const open = auditLog.filter(f => !f.resolved).length;
-  const high = auditLog.filter(f => f.severity === 'high' && !f.resolved).length;
-  res.json({ 
-    message: `Audit brief generated — ${open} open flags (${high} high severity)`,
-    openFlags: open,
-    highSeverity: high
-  });
+export const login = async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { username } });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        username: user.username,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Login failed' });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({
+      id: user.id,
+      fullName: user.fullName,
+      username: user.username,
+      role: user.role,
+    });
+  } catch (error) {
+    console.error('GetMe error:', error);
+    res.status(500).json({ message: 'Failed to get user' });
+  }
 };
