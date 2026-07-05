@@ -42,10 +42,22 @@ export const initiateMpesaPayment = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Format phone number (remove 0 or +254)
-    const formattedPhone = phoneNumber.replace(/^0+/, '').replace(/^\+254/, '').replace(/\D/g, '');
-    const fullPhone = '254' + formattedPhone;
+    // Format phone number correctly
+    let cleanPhone = phoneNumber.replace(/\D/g, '');
+    
+    // Remove leading 254 if present, then add it back
+    if (cleanPhone.startsWith('254')) {
+      cleanPhone = cleanPhone.substring(3);
+    }
+    // Remove leading 0 if present
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    
+    const fullPhone = '254' + cleanPhone;
 
+    console.log('Original phone:', phoneNumber);
+    console.log('Clean phone:', cleanPhone);
     console.log('Formatted phone:', fullPhone);
 
     // Get access token
@@ -113,6 +125,15 @@ export const initiateMpesaPayment = async (req, res) => {
     console.error('Status:', error.response?.status);
     console.error('Data:', JSON.stringify(error.response?.data, null, 2));
     console.error('Message:', error.message);
+    
+    // Check for specific error codes
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      if (errorData.errorCode) {
+        console.error('M-Pesa Error Code:', errorData.errorCode);
+        console.error('M-Pesa Error Message:', errorData.errorMessage);
+      }
+    }
     
     res.status(500).json({
       message: 'M-Pesa payment initiation failed',
