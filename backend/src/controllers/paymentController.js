@@ -57,21 +57,25 @@ export const initiateMpesaPayment = async (req, res) => {
     );
     console.log('Token obtained');
 
-    // Generate password - EXACT MATCH to working curl
+    // Generate timestamp ONCE and reuse it
     const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+    console.log('Timestamp:', timestamp);
+    
+    // Generate password using the SAME timestamp - HARDCODED to match curl
     const password = Buffer.from(
-      `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
+      `174379bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919${timestamp}`
     ).toString('base64');
+    console.log('Password generated');
 
     // STK Push - EXACT MATCH to working curl
     const stkRequest = {
-      BusinessShortCode: process.env.MPESA_SHORTCODE,
+      BusinessShortCode: '174379',
       Password: password,
       Timestamp: timestamp,
       TransactionType: 'CustomerPayBillOnline',
       Amount: Math.round(amount),
       PartyA: fullPhone,
-      PartyB: process.env.MPESA_SHORTCODE,
+      PartyB: '174379',
       PhoneNumber: fullPhone,
       CallBackURL: process.env.MPESA_CALLBACK_URL,
       AccountReference: propertyId,
