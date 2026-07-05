@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 14.5px;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-800 font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply border border-gray-800 bg-transparent text-gray-800 px-4 py-2 rounded transition-colors duration-200 flex items-center gap-2 text-sm font-medium;
+  }
+  
+  .btn:hover {
+    @apply bg-gray-100;
+  }
+  
+  .btn-primary {
+    @apply bg-teal-600 border-teal-600 text-white;
+  }
+  
+  .btn-primary:hover {
+    @apply bg-teal-700;
+  }
+  
+  .btn-gold {
+    @apply bg-amber-600 border-amber-600 text-white;
+  }
+  
+  .btn-gold:hover {
+    @apply bg-amber-700;
+  }
+  
+  .btn-danger {
+    @apply bg-red-700 border-red-700 text-white;
+  }
+  
+  .btn-danger:hover {
+    @apply bg-red-800;
+  }
+  
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  
+  .btn-ghost {
+    @apply border-transparent text-gray-500;
+  }
+  
+  .btn-ghost:hover {
+    @apply bg-gray-100 text-gray-800;
+  }
+  
+  .input {
+    @apply border border-gray-300 bg-white rounded px-3 py-2 text-sm font-sans text-gray-800 w-full focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600;
+  }
+  
+  .badge {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap;
+  }
+  
+  .badge::before {
+    content: '●';
+    font-size: 7px;
+  }
+  
+  .badge-green {
+    @apply bg-green-100 text-green-700;
+  }
+  
+  .badge-amber {
+    @apply bg-amber-100 text-amber-700;
+  }
+  
+  .badge-danger {
+    @apply bg-red-100 text-red-700;
+  }
+  
+  .badge-gray {
+    @apply bg-gray-100 text-gray-600;
+  }
+  
+  .badge-teal {
+    @apply bg-teal-100 text-teal-700;
+  }
+  
+  .badge-gold {
+    @apply bg-amber-100 text-amber-700;
+  }
+  
+  .panel {
+    @apply bg-white border border-gray-200 rounded-lg mb-4;
+  }
+  
+  .panel-head {
+    @apply flex justify-between items-center p-4 border-b border-gray-200 flex-wrap gap-2;
+  }
+  
+  .panel-head h2 {
+    @apply font-serif text-lg font-semibold m-0;
+  }
+  
+  .panel-body {
+    @apply p-4;
+  }
+}
