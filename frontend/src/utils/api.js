@@ -32,4 +32,9 @@ api.interceptors.response.use(
   }
 );
 
+// M-Pesa payment function
+export const initiateMpesaPayment = (data) => {
+  return api.post('/payments/mpesa', data);
+};
+
 export default api;

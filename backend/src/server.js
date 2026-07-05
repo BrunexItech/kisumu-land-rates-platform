@@ -16,7 +16,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// CORS
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Database connection
@@ -37,6 +42,13 @@ app.use('/api/properties', propertyRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/tenants', tenantRoutes);
+
+// M-Pesa Callback Route
+app.post('/api/mpesa/callback', (req, res) => {
+  console.log('M-Pesa callback received:', req.body);
+  // Process payment here
+  res.status(200).json({ ResultCode: 0, ResultDesc: 'Success' });
+});
 
 // Error handler
 app.use(errorHandler);
