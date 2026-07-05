@@ -4,12 +4,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Get all payments
 export const getPayments = (req, res) => {
   res.json(payments);
 };
 
-// Get arrears data
 export const getArrearsData = (req, res) => {
   const buckets = {
     '0-30 days': 0,
@@ -31,12 +29,11 @@ export const getArrearsData = (req, res) => {
   res.json(result);
 };
 
-// Initiate M-Pesa STK Push
 export const initiateMpesaPayment = async (req, res) => {
   try {
     const { phoneNumber, amount, propertyId } = req.body;
 
-    console.log('Received payment request:', { phoneNumber, amount, propertyId });
+    console.log('Payment request:', { phoneNumber, amount, propertyId });
 
     if (!phoneNumber || !amount || !propertyId) {
       return res.status(400).json({ message: 'Missing required fields' });
@@ -44,14 +41,9 @@ export const initiateMpesaPayment = async (req, res) => {
 
     // Format phone number
     let cleanPhone = phoneNumber.replace(/\D/g, '');
-    if (cleanPhone.startsWith('254')) {
-      cleanPhone = cleanPhone.substring(3);
-    }
-    if (cleanPhone.startsWith('0')) {
-      cleanPhone = cleanPhone.substring(1);
-    }
+    if (cleanPhone.startsWith('254')) cleanPhone = cleanPhone.substring(3);
+    if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
     const fullPhone = '254' + cleanPhone;
-
     console.log('Formatted phone:', fullPhone);
 
     // Get access token
@@ -59,23 +51,19 @@ export const initiateMpesaPayment = async (req, res) => {
       `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
     ).toString('base64');
 
-    const tokenResponse = await axios.get(
+    const tokenRes = await axios.get(
       'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
-      {
-        headers: { Authorization: `Basic ${auth}` },
-      }
+      { headers: { Authorization: `Basic ${auth}` } }
     );
+    console.log('Token obtained');
 
-    const accessToken = tokenResponse.data.access_token;
-    console.log('Access token obtained');
-
-    // Generate password
+    // Generate password - EXACT MATCH to working curl
     const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
     const password = Buffer.from(
       `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`
     ).toString('base64');
 
-    // STK Push request
+    // STK Push - EXACT MATCH to working curl
     const stkRequest = {
       BusinessShortCode: process.env.MPESA_SHORTCODE,
       Password: password,
@@ -86,35 +74,35 @@ export const initiateMpesaPayment = async (req, res) => {
       PartyB: process.env.MPESA_SHORTCODE,
       PhoneNumber: fullPhone,
       CallBackURL: process.env.MPESA_CALLBACK_URL,
-      AccountReference: propertyId || 'KISUMU-LAND',
-      TransactionDesc: 'Land Rates Payment',
+      AccountReference: propertyId,
+      TransactionDesc: 'Land Rates Payment'
     };
 
-    console.log('STK Request sent');
+    console.log('Sending STK Push...');
 
-    const stkResponse = await axios.post(
+    const stkRes = await axios.post(
       'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
       stkRequest,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+      { 
+        headers: { 
+          Authorization: `Bearer ${tokenRes.data.access_token}`, 
+          'Content-Type': 'application/json' 
+        } 
       }
     );
 
-    console.log('STK Response:', stkResponse.data);
+    console.log('STK Response:', stkRes.data);
 
-    res.json({
-      success: true,
+    res.json({ 
+      success: true, 
       message: 'STK Push sent successfully',
-      data: stkResponse.data,
+      data: stkRes.data 
     });
   } catch (error) {
-    console.error('M-Pesa STK Error:', error.response?.data || error.message);
-    res.status(500).json({
+    console.error('M-Pesa Error:', error.response?.data || error.message);
+    res.status(500).json({ 
       message: 'M-Pesa payment initiation failed',
-      error: error.response?.data || error.message,
+      error: error.response?.data || error.message 
     });
   }
 };
